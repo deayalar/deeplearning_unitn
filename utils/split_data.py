@@ -59,3 +59,21 @@ class ValidationSplitter:
     
     def _get_ids_from_images(self, images_list):
         return [name.split("_")[0] for name in images_list]
+    
+    #TODO: Include some statistics of the identities in the datasets, eg. distribution of identities. see split attempt
+
+class TrainingSplitter():
+    
+    @staticmethod
+    def split(full_training_data, train_size: float=0.8, stratified: bool=True, random_seed=None):
+        identities = None
+        if stratified:
+            identities = [image_name.split("_")[0] for image_name in full_training_data]
+
+        train_set, val_set = train_test_split(full_training_data,
+                                                  train_size=train_size,
+                                                  stratify=identities,
+                                                  random_state=random_seed)
+        print(f"Final Train set size: {len(train_set)}")
+        print(f"Training Validation set size: {len(val_set)}")
+        return train_set, val_set
