@@ -4,23 +4,34 @@ import torch.nn.functional as F
 
 
 class ReIdModel(nn.Module):
-    def __init__(self):
+    def __init__(self, n_classes):
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.feature_extractor = nn.Sequential(            
+            nn.Conv2d(in_channels=3, out_channels=6, kernel_size=5, stride=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2),
+            nn.Conv2d(in_channels=16, out_channels=120, kernel_size=5, stride=1),
+            nn.ReLU()
+        )
+
+        self.classifier = nn.Sequential(
+            nn.Linear(in_features=7 * 7 * 120, out_features=120),
+            nn.ReLU(),
+            nn.Linear(in_features=120, out_features=84),
+            nn.ReLU(),
+            nn.Linear(in_features=84, out_features=n_classes),
+        )
+
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.feature_extractor(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
         return x
+
 
 class LeNet(torch.nn.Module):
     def __init__(self):
@@ -28,7 +39,7 @@ class LeNet(torch.nn.Module):
       
       # input channel = 1, output channels = 6, kernel size = 5
       # input image size = (28, 28), image output size = (24, 24)
-      self.conv1 = torch.nn.Conv2d(in_channels=1, out_channels=6, kernel_size=(5, 5))
+      self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=6, kernel_size=(5, 5))
       
       # input channel = 6, output channels = 16, kernel size = 5
       # input image size = (12, 12), output image size = (8, 8)

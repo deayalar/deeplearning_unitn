@@ -4,7 +4,7 @@
 import torch
 import torch.optim as optim
 
-from my_datasets.reid_dataset import ReIdDataset
+from my_datasets.reid_dataset import Market1501
 
 from torch.utils.data import DataLoader
 import torchvision
@@ -28,15 +28,13 @@ train_set, val_set = TrainingSplitter().split(train_set, train_size=0.8, random_
 
 #Create pytorch Datasets
 composed = transforms.Compose([transforms.ToTensor()])
-target_composed = transforms.Compose([transforms.ToTensor()])
 
-train_dataset = ReIdDataset(root_dir=TRAIN_ROOT, 
+train_dataset = Market1501(root_dir=TRAIN_ROOT, 
                             images_list=train_set,
-                            transform=composed,
-                            target_transform=target_composed)
-val_dataset = ReIdDataset(root_dir=TRAIN_ROOT, 
-                            images_list=val_set,
-                            target_transform=target_composed)
+                            transform=composed)
+val_dataset = Market1501(root_dir=TRAIN_ROOT, 
+                         images_list=val_set,
+                         transform=composed)
 
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=True)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=128, shuffle=False)
@@ -181,6 +179,6 @@ main()
 
 # VALIDATION
 
-val_estimation_dataset = ReIdDataset(root_dir=TRAIN_ROOT, 
+val_estimation_dataset = Market1501(root_dir=TRAIN_ROOT, 
                                images_list=val_estimation_set,
                                transform=composed)
