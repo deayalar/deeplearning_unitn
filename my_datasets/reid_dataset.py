@@ -13,6 +13,7 @@ class Market1501(VisionDataset):
   Dataset class for the re-identification task
   '''
   def __init__(self, root_dir,
+               full_train_set = None,
                images_list = None,
                transform = None,
                target_transform = None):
@@ -23,16 +24,8 @@ class Market1501(VisionDataset):
     self.root_dir = root_dir #Path to the folder containing the images
     self.transform = transform
     self.target_transform = target_transform
-
-    full_images_list = os.listdir(self.root_dir)
-
-    if not images_list:
-      print(f"Loading images from {self.root_dir}")
-      self.images_list = full_images_list
-    else:
-      self.images_list = images_list
-
-    self.identities = get_ids_from_images(full_images_list)
+    self.images_list = images_list
+    self.identities = get_ids_from_images(full_train_set)
 
     self.classes = list(set(self.identities))
     self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}

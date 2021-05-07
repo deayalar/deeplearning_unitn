@@ -21,18 +21,21 @@ TRAIN_ROOT = "/media/deayalar/Data/Documents/Unitn/Deep Learning/Assignment/data
 
 # This validation set is used to estimate the performance on the final test set
 splitter = ValidationSplitter(train_root=TRAIN_ROOT)
-train_set, val_estimation_set = splitter.split(train_size=0.75, random_seed=42)
+full_train_set, val_estimation_set = splitter.split(train_size=0.75, random_seed=42)
 
 # Create a validation set for training
-train_set, val_set = TrainingSplitter().split(train_set, train_size=0.8, random_seed=42)
+train_set, val_set = TrainingSplitter().split(full_train_set, train_size=0.8, random_seed=42)
 
 #Create pytorch Datasets
-composed = transforms.Compose([transforms.ToTensor()])
+composed = transforms.Compose([transforms.Resize((56, 56)),
+                               transforms.ToTensor()]) #Pending normalization
 
-train_dataset = Market1501(root_dir=TRAIN_ROOT, 
-                            images_list=train_set,
-                            transform=composed)
+train_dataset = Market1501(root_dir=TRAIN_ROOT,
+                           full_train_set = full_train_set,
+                           images_list=train_set,
+                           transform=composed)
 val_dataset = Market1501(root_dir=TRAIN_ROOT, 
+                         full_train_set = full_train_set,
                          images_list=val_set,
                          transform=composed)
 
@@ -109,7 +112,7 @@ def train(model, data_loader, optimizer, cost_function, device='cuda:0'):
 
 
 def main(batch_size=128, 
-         device='cuda:0', 
+         device='cpu', 
          learning_rate=0.01, 
          weight_decay=0.000001, 
          momentum=0.9, 
@@ -125,15 +128,15 @@ def main(batch_size=128,
   #                                                 test_batch_size=batch_size, 
   #                                                 dataset=dataset)
   
-  net = LeNet().to(torch.device(device))
+  net = ReIdModel(n_classes=len(train_dataset.classes)).to(device)
   
   optimizer =  get_optimizer(net, learning_rate, weight_decay, momentum)
   
   cost_function = cost_functions.cross_entropy()
 
   print('Before training:')
-  train_loss, train_accuracy = test(net, train_loader, cost_function)
-  val_loss, val_accuracy = test(net, val_loader, cost_function)
+  train_loss, train_accuracy = test(net, train_loader, cost_function, device)
+  val_loss, val_accuracy = test(net, val_loader, cost_function, device)
   #test_loss, test_accuracy = test(net, test_loader, cost_function)
 
   print('\t Training loss {:.5f}, Training accuracy {:.2f}'.format(train_loss, train_accuracy))
@@ -148,8 +151,8 @@ def main(batch_size=128,
   writer.add_scalar('Accuracy/val_accuracy', val_accuracy, 0)
 
   for e in range(epochs):
-    train_loss, train_accuracy = train(net, train_loader, optimizer, cost_function)
-    val_loss, val_accuracy = test(net, val_loader, cost_function)
+    train_loss, train_accuracy = train(net, train_loader, optimizer, cost_function, device)
+    val_loss, val_accuracy = test(net, val_loader, cost_function, device)
     print('Epoch: {:d}'.format(e+1))
     print('\t Training loss {:.5f}, Training accuracy {:.2f}'.format(train_loss, train_accuracy))
     print('\t Validation loss {:.5f}, Validation accuracy {:.2f}'.format(val_loss, val_accuracy))
@@ -162,8 +165,8 @@ def main(batch_size=128,
     writer.add_scalar('Accuracy/val_accuracy', val_accuracy, e + 1)
 
   print('After training:')
-  train_loss, train_accuracy = test(net, train_loader, cost_function)
-  val_loss, val_accuracy = test(net, val_loader, cost_function)
+  train_loss, train_accuracy = test(net, train_loader, cost_function, device)
+  val_loss, val_accuracy = test(net, val_loader, cost_function, device)
   #test_loss, test_accuracy = test(net, test_loader, cost_function)
 
   print('\t Training loss {:.5f}, Training accuracy {:.2f}'.format(train_loss, train_accuracy))
@@ -173,7 +176,6 @@ def main(batch_size=128,
 
   # Closes the logger
   writer.close()
-
 
 main()
 
