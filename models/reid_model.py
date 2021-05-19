@@ -2,8 +2,40 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torchvision import models
+
+PRETRAINED_MODELS = {
+    "resnet18": lambda : models.resnet18(pretrained=True),
+    "resnet50": lambda : models.resnet50(pretrained=True)
+    # More pretrained models here e.g. alexnet, vgg16, etc
+}
+
+class FinetunedModel(nn.Module):
+    def __init__(self, architecture, embedding_size):
+        super(FinetunedModel, self).__init__()
+        self.architecture = architecture
+        self.embedding_size = embedding_size
+
+        self.backbone = PRETRAINED_MODELS[architecture]()
+        self.finetune(self.backbone, embedding_size)
+
+    def finetune(self, model, embedding_size):
+        model_name = model.__class__.__name__
+        if model_name.lower().startswith("resnet"):
+            self.features = nn.Sequential(*list(model.children())[:-1])
+            self.classifier = nn.Sequential(
+                nn.Linear(512, embedding_size)
+            )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = self.classifier(x)
+        return x
+
 
 class ReIdModel(nn.Module):
+    "Model based on LeNet for person re-identification"
     def __init__(self, n_classes):
         super().__init__()
         self.feature_extractor = nn.Sequential(
