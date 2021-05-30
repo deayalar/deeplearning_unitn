@@ -5,31 +5,34 @@ import torch.nn.functional as F
 from torchvision import models
 
 PRETRAINED_MODELS = {
-    "resnet18": lambda : models.resnet18(pretrained=True),
-    "resnet50": lambda : models.resnet50(pretrained=True)
+    "resnet18": { "load": lambda : models.resnet18(pretrained=True), "feature_size": 512},
+    "resnet50": { "load": lambda : models.resnet50(pretrained=True), "feature_size": 2048}
     # More pretrained models here e.g. alexnet, vgg16, etc
 }
 
 class FinetunedModel(nn.Module):
-    def __init__(self, architecture, embedding_size):
+    def __init__(self, architecture, n_classes):
         super(FinetunedModel, self).__init__()
         self.architecture = architecture
-        self.embedding_size = embedding_size
 
-        self.backbone = PRETRAINED_MODELS[architecture]()
-        self.finetune(self.backbone, embedding_size)
+        self.backbone = PRETRAINED_MODELS[architecture]["load"]()
+        self.feature_size = PRETRAINED_MODELS[architecture]["feature_size"]
+        print(f"Backbone feature size: {self.feature_size}")
+        self.finetune(self.backbone, n_classes)
 
-    def finetune(self, model, embedding_size):
+    def finetune(self, model, n_classes):
         model_name = model.__class__.__name__
         if model_name.lower().startswith("resnet"):
             self.features = nn.Sequential(*list(model.children())[:-1])
             self.classifier = nn.Sequential(
-                nn.Linear(512, embedding_size)
+                nn.Linear(self.feature_size, n_classes)
             )
 
-    def forward(self, x):
+    def forward(self, x, get_features=False):
         x = self.features(x)
         x = x.view(x.size(0), -1)
+        if get_features:
+            return x
         x = self.classifier(x)
         return x
 

@@ -14,10 +14,12 @@ class ValidationSplitter:
     ----------
     train_root : Directory that contains the training examples
     """
-    def __init__(self, train_root: str): 
+    def __init__(self, train_root: str, test_root: str, queries_root: str): 
         if not os.path.exists(train_root):
-            raise FileNotFoundError("Can't find directory: " + train_root)
+            raise FileNotFoundError(f"Can't find directory {train_root}")
         self.train_root = train_root
+        self.test_root = test_root
+        self.queries_root = queries_root
     
     def split(self, train_size:float, split_identities: bool=False,random_seed:int=None):
         """
@@ -52,13 +54,37 @@ class ValidationSplitter:
             train_set, val_set = train_test_split(images_list,
                                                   train_size=train_size,
                                                   random_state=random_seed)
-        
-        print(f"Identities in train set size: {len(set(get_ids_from_images(train_set)))}")
-        print(f"Identities in val set size: {len(set(get_ids_from_images(val_set)))}")
+        val_set, val_queries = self.__extract_queries(val_set, keep_proportion=True)
+
+        print(f"Identities in train set: {len(set(get_ids_from_images(train_set)))}")
+        print(f"Identities in validation set: {len(set(get_ids_from_images(val_set)))}")
         print(f"Train set size: {len(train_set)}")
         print(f"Validation set size: {len(val_set)}")
+        print(f"Number of validation queries: {len(val_queries)}")
 
-        return train_set, val_set
+        return train_set, val_set, val_queries
+    
+    def __extract_queries(self, full_validation_set: list, keep_proportion=False, queries_size=.15):
+        """
+        Extract queries from validation set in the same proportion than test/queries
+        TODO: Maybe we can include some junk images in this validation set to see how it performs in the estimation of test
+        """
+        if keep_proportion:
+            if not self.test_root or not self.queries_root:
+                raise RuntimeError("Set the test and queries directory to keep the same proportion for queries extraction")
+
+            test_len = len(os.listdir(self.test_root))
+            queries_len = len(os.listdir(self.queries_root))
+            #This is to make an stratified split since we need to ensure results for the queries
+            identities  = get_ids_from_images(full_validation_set)  
+
+            queries_size = (queries_len / test_len)
+        print(f"Extract queries proportion: {queries_size}")
+        validation_set, val_queries = train_test_split(full_validation_set,
+                                            train_size=1 - queries_size,
+                                            stratify=identities,
+                                            random_state=42)
+        return validation_set, val_queries
     
     #TODO: Include some statistics of the identities in the datasets, eg. distribution of identities. see split attempt
 

@@ -1,4 +1,5 @@
-﻿# Visual Studio Code cache
+﻿*.onnx
+# Visual Studio Code cache
 .vscode/
 
 # Byte-compiled / optimized / DLL files
