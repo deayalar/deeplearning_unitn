@@ -1,6 +1,7 @@
 import os
 import torch
 from numpy import asarray
+import pandas as pd
 from torch.utils.data import Dataset
 from torchvision.datasets import VisionDataset
 
@@ -26,6 +27,7 @@ class Market1501(VisionDataset):
     self.target_transform = target_transform
     self.images_list = images_list
     self.identities = get_ids_from_images(full_train_set)
+    self.attr = pd.read_csv('/content/dataset/annotations_train.csv')
 
     self.classes = list(set(self.identities))
     self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
@@ -37,9 +39,13 @@ class Market1501(VisionDataset):
     '''
     image_name = self.images_list[idx]
     X = image_loader(os.path.join(self.root_dir, image_name))
+    
+    image_index = get_ids_from_images(image_name)
+    y = self.attr.iloc[image_index]
 
-    identity = image_name.split("_")[0]
-    y = self.class_to_idx[identity]
+    # identity = image_name.split("_")[0]
+    # y = self.class_to_idx[identity]
+    
 
     if self.transform is not None:
         X = self.transform(X)
