@@ -42,7 +42,7 @@ class Evaluator:
                     encountered_positives += 1
                     current_precision = encountered_positives / (idx + 1)
                     current_ap += current_precision * delta_recall
-                print(current_ap)
+            print(current_ap)
 
             m_ap += current_ap
 
