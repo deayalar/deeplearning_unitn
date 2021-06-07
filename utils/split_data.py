@@ -78,7 +78,7 @@ class ValidationSplitter:
             #This is to make an stratified split since we need to ensure results for the queries
             identities  = get_ids_from_images(full_validation_set)  
 
-            queries_size = (queries_len / test_len)
+            queries_size = truncate((queries_len / test_len) , 2)
         print(f"Extract queries proportion: {queries_size}")
         validation_set, val_queries = train_test_split(full_validation_set,
                                             train_size=1 - queries_size,
@@ -104,3 +104,20 @@ class TrainingSplitter():
         print(f"Final Train set size: {len(train_set)}")
         print(f"Training Validation set size: {len(val_set)}")
         return train_set, val_set
+    
+import math
+
+def truncate(number, decimals=0):
+    """
+    Returns a value truncated to a specific number of decimal places.
+    https://kodify.net/python/math/truncate-decimals/
+    """
+    if not isinstance(decimals, int):
+        raise TypeError("decimal places must be an integer.")
+    elif decimals < 0:
+        raise ValueError("decimal places has to be 0 or more.")
+    elif decimals == 0:
+        return math.trunc(number)
+
+    factor = 10.0 ** decimals
+    return math.trunc(number * factor) / factor
