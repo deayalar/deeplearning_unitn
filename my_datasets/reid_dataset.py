@@ -19,24 +19,25 @@ class Market1501(VisionDataset):
                full_train_set = None,
                images_list = None,
                transform = None,
+               attr=None,
                target_transform = None):
 
     super(Market1501, self).__init__(root_dir, transform=transform,
                                       target_transform=target_transform)
-    
     self.root_dir = root_dir #Path to the folder containing the images
     self.transform = transform
     self.target_transform = target_transform
     self.images_list = images_list
-
+    self.attr = attr
     #self.identities = get_ids_from_images(full_train_set)
     self.identities = get_ids_from_images(images_list)
 
     self.attr_df = pd.read_csv(attributes_file)
 
-
     self.classes = list(set(self.identities))
     self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
+    # idx = self.class_to_idx
+    self.attr = self.getAttribute()
 
   def __getitem__(self, idx: int):
     '''
@@ -63,6 +64,15 @@ class Market1501(VisionDataset):
     :return the number of elements that compose the dataset
     '''
     return len(self.images_list)
+
+  def getAttribute(self):
+    idx = self.class_to_idx
+    list_attr_keys = list(idx.keys())
+    list_attr_keys = list(map(int, list_attr_keys))
+    
+    attr_list_df = self.attr_df[self.attr_df['id'].isin(list_attr_keys)]
+    
+    return attr_list_df.to_numpy()
 
 def image_loader(path: str) -> Image.Image:
     with open(path, 'rb') as f:
