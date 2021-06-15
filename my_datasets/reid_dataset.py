@@ -35,6 +35,8 @@ class Market1501(VisionDataset):
     self.attr_df = pd.read_csv(attributes_file)
 
     self.classes = list(set(self.identities))
+    # self.classes = self.identities
+
     self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
     # idx = self.class_to_idx
     self.attr = self.getAttribute()
@@ -50,6 +52,7 @@ class Market1501(VisionDataset):
     identity = image_name.split("_")[0]
     y = self.class_to_idx[identity]
     attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
+    # attr = self.attr_df[self.attr_df["id"] == idx]
 
     if self.transform is not None:
         X = self.transform(X)
@@ -57,7 +60,8 @@ class Market1501(VisionDataset):
     if self.target_transform is not None:
         y = self.target_transform(y)
 
-    return X, y, attr
+    # return X, attr, identity, image_name
+    return X, attr
 
   def __len__(self):
     '''
@@ -78,3 +82,5 @@ def image_loader(path: str) -> Image.Image:
     with open(path, 'rb') as f:
         img = Image.open(f)
         return img.convert('RGB')
+
+
