@@ -3,6 +3,7 @@ import torch
 import logging
 import pandas as pd
 from numpy import asarray
+import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from torchvision.datasets import VisionDataset
@@ -19,27 +20,29 @@ class Market1501(VisionDataset):
                full_train_set = None,
                images_list = None,
                transform = None,
-               attr=None,
                target_transform = None):
 
     super(Market1501, self).__init__(root_dir, transform=transform,
                                       target_transform=target_transform)
+    
     self.root_dir = root_dir #Path to the folder containing the images
     self.transform = transform
     self.target_transform = target_transform
     self.images_list = images_list
-    self.attr = attr
+
     #self.identities = get_ids_from_images(full_train_set)
     self.identities = get_ids_from_images(images_list)
 
     self.attr_df = pd.read_csv(attributes_file)
+    self.convert_input_01()
 
     self.classes = list(set(self.identities))
-    # self.classes = self.identities
+    #self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
 
-    self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
-    # idx = self.class_to_idx
-    self.attr = self.getAttribute()
+  def convert_input_01(self):
+    for column in self.attr_df.columns:
+      if(column!='age'):
+        self.attr_df[column] =np.array((self.attr_df[column].astype('str').replace({'1': '0', '2': '1'})).astype("int64"))
 
   def __getitem__(self, idx: int):
     '''
@@ -50,33 +53,25 @@ class Market1501(VisionDataset):
     X = image_loader(os.path.join(self.root_dir, image_name))
 
     identity = image_name.split("_")[0]
-    y = self.class_to_idx[identity]
-    attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
-    # attr = self.attr_df[self.attr_df["id"] == idx]
-
+    #y = self.class_to_idx[identity]
+    # print(identity)
+    try:
+      attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
+    except:
+      print('identity: ',identity)
     if self.transform is not None:
         X = self.transform(X)
 
     if self.target_transform is not None:
-        y = self.target_transform(y)
+        identity = self.target_transform(int(identity))
 
-    # return X, attr, identity, image_name
-    return X, attr
+    return X, identity, attr
 
   def __len__(self):
     '''
     :return the number of elements that compose the dataset
     '''
     return len(self.images_list)
-
-  def getAttribute(self):
-    idx = self.class_to_idx
-    list_attr_keys = list(idx.keys())
-    list_attr_keys = list(map(int, list_attr_keys))
-    
-    attr_list_df = self.attr_df[self.attr_df['id'].isin(list_attr_keys)]
-    
-    return attr_list_df.to_numpy()
 
 def image_loader(path: str) -> Image.Image:
     with open(path, 'rb') as f:
