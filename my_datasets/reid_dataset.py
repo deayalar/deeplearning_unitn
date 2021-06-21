@@ -2,7 +2,7 @@ import os
 import torch
 import logging
 import pandas as pd
-from numpy import asarray
+import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset
 from torchvision.datasets import VisionDataset
@@ -33,10 +33,16 @@ class Market1501(VisionDataset):
     self.identities = get_ids_from_images(images_list)
 
     self.attr_df = pd.read_csv(attributes_file)
+    self.convert_attributes_01()
 
+    #self.classes = list(set(self.identities))
+    #self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
 
-    self.classes = list(set(self.identities))
-    self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
+  def convert_attributes_01(self):
+    """This function converts the input of the csv (1 and 2) to binary values (0 and 1)"""
+    for column in self.attr_df.columns:
+      if(column!='age' and column!='id'):
+        self.attr_df[column] =np.array((self.attr_df[column].astype('str').replace({'1': '0', '2': '1'})).astype("int64"))
 
   def __getitem__(self, idx: int):
     '''
@@ -47,16 +53,23 @@ class Market1501(VisionDataset):
     X = image_loader(os.path.join(self.root_dir, image_name))
 
     identity = image_name.split("_")[0]
-    y = self.class_to_idx[identity]
-    attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
+    #y = self.class_to_idx[identity]
+    try:
+      attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
+    except:
+      print("id to int: ",int(identity))
+      print('identity: ',identity)
+      print("dataframe lenght: ", len(self.attr_df))
+      print(self.attr_df.head(20))
+      print("results: ",self.attr_df[self.attr_df["id"] == int(identity)])
 
     if self.transform is not None:
         X = self.transform(X)
 
     if self.target_transform is not None:
-        y = self.target_transform(y)
-
-    return X, y, attr
+        #y = self.target_transform(y)
+        identity = self.target_transform(int(identity))
+    return X, identity, attr
 
   def __len__(self):
     '''
