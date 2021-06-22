@@ -4,7 +4,7 @@ from typing import Dict, Set, List
 class Evaluator:
 
     @staticmethod
-    def evaluate_map(predictions: Dict[str, List], ground_truth: Dict[str, Set]): # Predictions should be ordered regarding some similarity with the query
+    def evaluate_map(predictions: Dict[str, List], ground_truth: Dict[str, Set], debug:bool = False): # Predictions should be ordered regarding some similarity with the query
         '''
         Computes the mAP (https://jonathan-hui.medium.com/map-mean-average-precision-for-object-detection-45c121a31173) of the predictions with respect to the given ground truth
         In person reidentification mAP refers to the mean of the AP over all queries.
@@ -22,15 +22,17 @@ class Evaluator:
 
         m_ap = 0.0
         for current_ground_truth_query, current_ground_truth_query_set in ground_truth.items(): # The query is the key
-            print("current_ground_truth_query: " + str(current_ground_truth_query))
-            print("current_ground_truth_query_set: " + str(current_ground_truth_query_set))
+            if debug:
+                print("current_ground_truth_query: " + str(current_ground_truth_query))
+                print("current_ground_truth_query_set: " + str(current_ground_truth_query_set))
             # No predictions were performed for the current query, AP = 0
             if not current_ground_truth_query in predictions:
                 continue
 
             current_ap = 0.0  # The area under the curve for the current sample
             current_predictions_list = predictions[current_ground_truth_query]
-            print("current_predictions_list: " + str(current_predictions_list))
+            if debug:
+                print("current_predictions_list: " + str(current_predictions_list))
             # Recall increments of this quantity each time a new correct prediction is encountered in the prediction list
             delta_recall = 1.0 / len(current_ground_truth_query_set)
             # Goes through the list of predictions
