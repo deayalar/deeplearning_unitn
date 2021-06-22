@@ -27,7 +27,7 @@ class IdentificationLoss(nn.Module):
     def __init__(self):
         pass
     
-     def forward(self, preds, ids):
+    def forward(self, preds, ids):
         return 0
 
 class AttributesLossWrapper(nn.Module):
