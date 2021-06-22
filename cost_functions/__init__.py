@@ -14,6 +14,22 @@ def bin_cross_entropy_logit():
 def triplet_margin_loss():
     return nn.TripletMarginLoss()
 
+
+class OverallLoss(nn.Module):
+    def __init__(self):
+        id_loss = IdentificationLoss()
+        attr_loss = AttributesLossWrapper(0)
+
+    def forward(self, outputs_attr, attr, ids):
+        return self.id_loss(outputs_attr, ids) + self.attr_loss(outputs_attr, attr)
+
+class IdentificationLoss(nn.Module):
+    def __init__(self):
+        pass
+    
+     def forward(self, preds, ids):
+        return 0
+
 class AttributesLossWrapper(nn.Module):
     def __init__(self, task_num):
         super(AttributesLossWrapper, self).__init__()
