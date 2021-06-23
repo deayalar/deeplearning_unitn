@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class OverallLossWrapper(nn.Module):
-    def __init__(self):
+    def __init__(self,num_classes,feat_dim):
         super(OverallLossWrapper, self).__init__()
         # self.id_loss = TripletLoss()
         self.id_loss = CenterLoss(num_classes,feat_dim)
@@ -100,7 +100,7 @@ class CenterLoss(nn.Module):
             self.centers = nn.Parameter(torch.randn(self.num_classes, self.feat_dim).cuda())
         else:
             self.centers = nn.Parameter(torch.randn(self.num_classes, self.feat_dim))
-
+    
     def forward(self, output_features, target_ids):
         """
         Args:
@@ -122,3 +122,4 @@ class CenterLoss(nn.Module):
         loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
 
         return loss
+
