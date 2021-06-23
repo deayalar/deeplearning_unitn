@@ -6,7 +6,8 @@ import torch.nn.functional as F
 class OverallLossWrapper(nn.Module):
     def __init__(self):
         super(OverallLossWrapper, self).__init__()
-        self.id_loss = TripletLoss()
+        # self.id_loss = TripletLoss()
+        self.id_loss = CenterLoss(num_classes,feat_dim)
         self.attr_loss = AttributesLossWrapper(0)
 
     def forward(self, output_attrs, target_attrs, output_features, target_ids):
@@ -100,21 +101,22 @@ class CenterLoss(nn.Module):
         else:
             self.centers = nn.Parameter(torch.randn(self.num_classes, self.feat_dim))
 
-    def forward(self, x, labels):
+    def forward(self, output_features, target_ids):
         """
         Args:
             x: feature matrix with shape (batch_size, feat_dim).
             labels: ground truth labels with shape (batch_size).
+            self, x, labels -> self, output_features, target_ids
         """
-        batch_size = x.size(0)
-        distmat = torch.pow(x, 2).sum(dim=1, keepdim=True).expand(batch_size, self.num_classes) + \
+        batch_size = output_features.size(0)
+        distmat = torch.pow(output_features, 2).sum(dim=1, keepdim=True).expand(batch_size, self.num_classes) + \
                   torch.pow(self.centers, 2).sum(dim=1, keepdim=True).expand(self.num_classes, batch_size).t()
-        distmat.addmm_(1, -2, x, self.centers.t())
+        distmat.addmm_(1, -2, output_features, self.centers.t())
 
         classes = torch.arange(self.num_classes).long()
         if self.use_gpu: classes = classes.cuda()
-        labels = labels.unsqueeze(1).expand(batch_size, self.num_classes)
-        mask = labels.eq(classes.expand(batch_size, self.num_classes))
+        target_ids = target_ids.unsqueeze(1).expand(batch_size, self.num_classes)
+        mask = target_ids.eq(classes.expand(batch_size, self.num_classes))
 
         dist = distmat * mask.float()
         loss = dist.clamp(min=1e-12, max=1e+12).sum() / batch_size
