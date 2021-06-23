@@ -2,33 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def cross_entropy():
-    return nn.CrossEntropyLoss()
-
-def bin_cross_entropy():
-    return nn.BCELoss()
-
-def bin_cross_entropy_logit():
-    return nn.BCEWithLogitsLoss()
-
-def triplet_margin_loss():
-    return nn.TripletMarginLoss()
-
-
-class OverallLoss(nn.Module):
+class OverallLossWrapper(nn.Module):
     def __init__(self):
-        id_loss = IdentificationLoss()
-        attr_loss = AttributesLossWrapper(0)
+        super(OverallLossWrapper, self).__init__()
+        self.id_loss = TripletLoss()
+        self.attr_loss = AttributesLossWrapper(0)
 
-    def forward(self, outputs_attr, attr, ids):
-        return self.id_loss(outputs_attr, ids) + self.attr_loss(outputs_attr, attr)
-
-class IdentificationLoss(nn.Module):
-    def __init__(self):
-        pass
-    
-    def forward(self, preds, ids):
-        return 0
+    def forward(self, output_attrs, target_attrs, output_features, target_ids):
+        return self.id_loss(output_features, target_ids) + self.attr_loss(output_attrs, target_attrs)
 
 class AttributesLossWrapper(nn.Module):
     def __init__(self, task_num):
