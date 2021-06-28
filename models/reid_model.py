@@ -6,6 +6,7 @@ from torchvision import models
 
 PRETRAINED_MODELS = {
     "resnet18": { "load": lambda : models.resnet18(pretrained=True), "feature_size": 512},
+    "resnet34": { "load": lambda : models.resnet34(pretrained=True), "feature_size": 512},
     "resnet50": { "load": lambda : models.resnet50(pretrained=True), "feature_size": 2048}
     #More pretrained models here e.g. alexnet, vgg16, etc
 }
@@ -81,7 +82,10 @@ class FinetunedModel(nn.Module):
                                                          nn.Sigmoid())
             
             #Part of the networl that computes the identity
-            self.identity_classifier   =  nn.Sequential(nn.Linear(self.feature_size, n_identities))
+            self.identity_classifier   =  nn.Sequential(nn.Linear(self.feature_size, 256),
+                                                        nn.BatchNorm1d(256),
+                                                        nn.ReLU(),
+                                                        nn.Linear(256, n_identities))
 
     def forward(self, x):
         x = self.features(x)
