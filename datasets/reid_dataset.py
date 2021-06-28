@@ -35,8 +35,8 @@ class Market1501(VisionDataset):
     self.attr_df = pd.read_csv(attributes_file)
     self.convert_attributes()
 
-    #self.classes = list(set(self.identities))
-    #self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
+    self.unique_identities = list(set(self.identities))
+    self.class_to_idx = {_class: i for i, _class in enumerate(self.unique_identities)}
 
   def convert_attributes(self):
     """This function converts the input of the csv to the corresponding categorical avlues"""
@@ -54,16 +54,17 @@ class Market1501(VisionDataset):
 
     identity = image_name.split("_")[0]
     
-    #y = self.class_to_idx[identity]
+    y = self.class_to_idx[identity]
     attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
 
     if self.transform is not None:
         X = self.transform(X)
 
     if self.target_transform is not None:
-        #y = self.target_transform(y)
-        identity = self.target_transform(int(identity))
-    return X, identity, attr
+        y = self.target_transform(y)
+        #identity = self.target_transform(int(identity))
+    #return X, identity, attr
+    return X, y, attr
 
   def __len__(self):
     '''

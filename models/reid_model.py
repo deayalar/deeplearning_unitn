@@ -11,16 +11,16 @@ PRETRAINED_MODELS = {
 }
 
 class FinetunedModel(nn.Module):
-    def __init__(self, architecture, n_classes):
+    def __init__(self, architecture, n_identities):
         super(FinetunedModel, self).__init__()
         self.architecture = architecture
 
         self.backbone = PRETRAINED_MODELS[architecture]["load"]()
         self.feature_size = PRETRAINED_MODELS[architecture]["feature_size"]
         print(f"Backbone feature size: {self.feature_size}")
-        self.finetune(self.backbone, n_classes)
+        self.finetune(self.backbone, n_identities)
 
-    def finetune(self, model, n_classes):
+    def finetune(self, model, n_identities):
         model_name = model.__class__.__name__
         if model_name.lower().startswith("resnet"):
             self.features = nn.Sequential(*list(model.children())[:-1])
@@ -79,13 +79,14 @@ class FinetunedModel(nn.Module):
                                                          nn.Sigmoid())
             self.downbrown_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
                                                          nn.Sigmoid())
+            
+            #Part of the networl that computes the identity
+            self.identity_classifier   =  nn.Sequential(nn.Linear(self.feature_size, n_identities))
 
-    def forward(self, x, get_features=False):
+    def forward(self, x):
         x = self.features(x)
         x = x.view(x.size(0), -1)
-        #Returns the features vector to project in the space, 
-        if get_features: 
-            return x
+
         #Othervise returns the predictions made by the model
         age_classifier        = self.age_classifier(x)
         backpack_classifier   = self.backpack_classifier(x)
@@ -115,7 +116,9 @@ class FinetunedModel(nn.Module):
         downgreen_classifier  = self.downgreen_classifier(x)  
         downbrown_classifier  = self.downbrown_classifier(x) 
 
-        return  age_classifier, \
+        identity_classifier  = self.identity_classifier(x) 
+
+        return  (age_classifier, \
                 backpack_classifier, \
                 bag_classifier, \
                 handbag_classifier, \
@@ -141,5 +144,5 @@ class FinetunedModel(nn.Module):
                 downgray_classifier, \
                 downblue_classifier, \
                 downgreen_classifier, \
-                downbrown_classifier
+                downbrown_classifier), identity_classifier, x
                 

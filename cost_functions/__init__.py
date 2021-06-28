@@ -6,11 +6,17 @@ import torch.nn.functional as F
 class OverallLossWrapper(nn.Module):
     def __init__(self):
         super(OverallLossWrapper, self).__init__()
-        self.id_loss = TripletLoss()
+        self.triplet_loss = TripletLoss()
         self.attr_loss = AttributesLossWrapper(0)
+        self.id_loss = nn.CrossEntropyLoss()
 
-    def forward(self, output_attrs, target_attrs, output_features, target_ids):
-        return self.id_loss(output_features, target_ids) + self.attr_loss(output_attrs, target_attrs)
+    def forward(self, output_attrs, target_attrs, output_features, target_ids, output_ids):
+        #print("output_ids", output_ids)
+        target_ids = torch.Tensor(np.array([int(el) for el in target_ids])).to(torch.long).cuda()
+        #print("target_ids", target_ids)
+        return self.attr_loss(output_attrs, target_attrs) + \
+               self.triplet_loss(output_features, target_ids) + \
+               self.id_loss(output_ids, target_ids)
 
 class AttributesLossWrapper(nn.Module):
     def __init__(self, task_num):
@@ -53,7 +59,6 @@ class TripletLoss(nn.Module):
         """
         #print(targets)
         #print(inputs.size())
-        targets = torch.Tensor(np.array([int(el) for el in targets]))
         n = inputs.size(0)
         # inputs = 1. * inputs / (torch.norm(inputs, 2, dim=-1, keepdim=True).expand_as(inputs) + 1e-12)
         # Compute pairwise distance, replace by the official when merged
