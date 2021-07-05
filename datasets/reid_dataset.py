@@ -15,8 +15,9 @@ class Market1501(VisionDataset):
   '''
   Dataset class for the re-identification task
   '''
-  def __init__(self, root_dir, attributes_file,
-               full_train_set = None,
+  def __init__(self, root_dir,
+               test_dataset = False,
+               attributes_file=None,
                images_list = None,
                transform = None,
                target_transform = None):
@@ -28,15 +29,17 @@ class Market1501(VisionDataset):
     self.transform = transform
     self.target_transform = target_transform
     self.images_list = images_list
+    self.test_dataset = test_dataset
 
-    #self.identities = get_ids_from_images(full_train_set)
-    self.identities = get_ids_from_images(images_list)
+    if not test_dataset:
+      #self.identities = get_ids_from_images(full_train_set)
+      self.identities = get_ids_from_images(images_list)
 
-    self.attr_df = pd.read_csv(attributes_file)
-    self.convert_attributes()
+      self.attr_df = pd.read_csv(attributes_file)
+      self.convert_attributes()
 
-    self.unique_identities = list(set(self.identities))
-    self.class_to_idx = {_class: i for i, _class in enumerate(self.unique_identities)}
+      self.unique_identities = list(set(self.identities))
+      self.class_to_idx = {_class: i for i, _class in enumerate(self.unique_identities)}
 
   def convert_attributes(self):
     """This function converts the input of the csv to the corresponding categorical avlues"""
@@ -51,20 +54,22 @@ class Market1501(VisionDataset):
     '''
     image_name = self.images_list[idx]
     X = image_loader(os.path.join(self.root_dir, image_name))
-
-    identity = image_name.split("_")[0]
-    
-    y = self.class_to_idx[identity]
-    attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
+    y = torch.empty(1, dtype=torch.bool)
+    attr = torch.empty(1, dtype=torch.bool)
+    if not self.test_dataset:
+      identity = image_name.split("_")[0]
+      
+      y = self.class_to_idx[identity]
+      attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
+      
+      if self.target_transform is not None:
+        y = self.target_transform(y)
 
     if self.transform is not None:
         X = self.transform(X)
 
-    if self.target_transform is not None:
-        y = self.target_transform(y)
-        #identity = self.target_transform(int(identity))
-    #return X, identity, attr
     return X, y, attr
+
 
   def __len__(self):
     '''
