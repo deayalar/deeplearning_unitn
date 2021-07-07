@@ -7,7 +7,9 @@ from torchvision import models
 PRETRAINED_MODELS = {
     "resnet18": { "load": lambda : models.resnet18(pretrained=True), "feature_size": 512},
     "resnet34": { "load": lambda : models.resnet34(pretrained=True), "feature_size": 512},
-    "resnet50": { "load": lambda : models.resnet50(pretrained=True), "feature_size": 2048}
+    "resnet50": { "load": lambda : models.resnet50(pretrained=True), "feature_size": 2048},
+    "alexnet": { "load": lambda : models.alexnet(pretrained=True), "feature_size": 4096},
+    "vgg16": { "load": lambda : models.vgg16(pretrained=True), "feature_size": 4096}
     #More pretrained models here e.g. alexnet, vgg16, etc
 }
 
@@ -25,67 +27,74 @@ class FinetunedModel(nn.Module):
         model_name = model.__class__.__name__
         if model_name.lower().startswith("resnet"):
             self.features = nn.Sequential(*list(model.children())[:-1])
-            #Attributes classifiers
-            self.age_classifier        =   nn.Sequential(nn.Linear(self.feature_size,4),
-                                                         nn.Softmax(dim=1)) # 4 possible values
-            self.backpack_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.bag_classifier        =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.handbag_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.clothes_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.down_classifier       =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.up_classifier         =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.hair_classifier       =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.hat_classifier        =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.gender_classifier     =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upblack_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upwhite_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upred_classifier      =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.uppurple_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upyellow_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upgray_classifier     =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upblue_classifier     =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.upgreen_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downblack_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downwhite_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downpink_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downpurple_classifier =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downyellow_classifier =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downgray_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downblue_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downgreen_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
-            self.downbrown_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
-                                                         nn.Sigmoid())
+        elif model_name.lower().startswith("vgg"):
+             self.features = nn.Sequential(*list(model.classifier.children())[:-3])
+        elif model_name.lower().startswith("alexnet"):
+             self.features = nn.Sequential(*list(model.classifier.children())[:-1]) 
+                
             
-            #Part of the networl that computes the identity
-            self.identity_classifier   =  nn.Sequential(nn.Linear(self.feature_size, 256),
-                                                        nn.BatchNorm1d(256),
-                                                        nn.ReLU(),
-                                                        nn.Linear(256, n_identities))
+            
+        #Attributes classifiers
+        self.age_classifier        =   nn.Sequential(nn.Linear(self.feature_size,4),
+                                                     nn.Softmax(dim=1)) # 4 possible values
+        self.backpack_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.bag_classifier        =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.handbag_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.clothes_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.down_classifier       =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.up_classifier         =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.hair_classifier       =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.hat_classifier        =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.gender_classifier     =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upblack_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upwhite_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upred_classifier      =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.uppurple_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upyellow_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upgray_classifier     =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upblue_classifier     =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.upgreen_classifier    =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downblack_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downwhite_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downpink_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downpurple_classifier =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downyellow_classifier =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downgray_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downblue_classifier   =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downgreen_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+        self.downbrown_classifier  =   nn.Sequential(nn.Linear(self.feature_size,1),
+                                                     nn.Sigmoid())
+
+        #Part of the networl that computes the identity
+        self.identity_classifier   =  nn.Sequential(nn.Linear(self.feature_size, 256),
+                                                    nn.BatchNorm1d(256),
+                                                    nn.ReLU(),
+                                                    nn.Linear(256, n_identities))
 
     def forward(self, x):
         x = self.features(x)
