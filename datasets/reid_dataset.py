@@ -13,7 +13,7 @@ from PIL import Image
 
 class Market1501(VisionDataset):
   '''
-  Dataset class for the re-identification task
+  Dataset class for the re-identification and attributes classification task
   '''
   def __init__(self, root_dir,
                test_dataset = False,
@@ -24,7 +24,7 @@ class Market1501(VisionDataset):
 
     super(Market1501, self).__init__(root_dir, transform=transform,
                                       target_transform=target_transform)
-    
+
     self.root_dir = root_dir #Path to the folder containing the images
     self.transform = transform
     self.target_transform = target_transform
@@ -58,10 +58,10 @@ class Market1501(VisionDataset):
     attr = torch.empty(1, dtype=torch.bool)
     if not self.test_dataset:
       identity = image_name.split("_")[0]
-      
+
       y = self.class_to_idx[identity]
       attr = self.attr_df[self.attr_df["id"] == int(identity)].values[0][1:]
-      
+
       if self.target_transform is not None:
         y = self.target_transform(y)
 

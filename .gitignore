@@ -1,4 +1,7 @@
-﻿*.onnx
+﻿classification_test.csv
+reid_test.txt
+
+*.onnx
 # Visual Studio Code cache
 .vscode/
 
