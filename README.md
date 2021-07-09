@@ -12,9 +12,5 @@ The main framework used in this implementation is PyTorch.
 ### EXECUTION
 To execute the code in this repo:
 1. Go to http://colab.research.google.com/
-2. Select the tab "Github"
-3. In the search field "Enter a GitHub URL or search by organization or user" enter deayalar/deeplearning_unitn
-4. Click Search button
-5. Select the branch "triplet"
-6. Select the notebook "DL_Project_wandb_embedding.ipynb"
+4. Upload the "DL_Project_wandb_embedding.ipynb" notebook 
 7. Run all cells in the Notebook
