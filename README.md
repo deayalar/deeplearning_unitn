@@ -12,5 +12,5 @@ The main framework used in this implementation is PyTorch.
 ### EXECUTION
 To execute the code in this repo:
 1. Go to http://colab.research.google.com/
-4. Upload the "DL_Project_wandb_embedding.ipynb" notebook 
-7. Run all cells in the Notebook
+2. Upload the "DL_Project_wandb_embedding.ipynb" notebook or select the github tab and paste deayalar/deeplearning_unitn in the url
+3. Run all cells in the Notebook
